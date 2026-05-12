@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Image } from 'react-native';
 
 const TOKENS = {
   openai: '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',
@@ -11,31 +11,42 @@ export default function App() {
   const [prompt, setPrompt] = useState('');
   const [mediaType, setMediaType] = useState('image');
   const [loading, setLoading] = useState(false);
+  const [resultUri, setResultUri] = useState(null); // Para mostrar la imagen generada
 
   const handleGenerate = async () => {
-    if (!prompt) return Alert.alert("Error", "Escribe algo para empezar.");
+    if (!prompt) return Alert.alert("Aviso", "Escribe una descripción primero.");
     setLoading(true);
+    setResultUri(null);
     
     try {
-      // LÓGICA PARA IMAGEN (OPENAI)
       if (mediaType === 'image') {
         const response = await fetch('https://api.openai.com/v1/images/generations', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKENS.openai}` },
-          body: JSON.stringify({ prompt, n: 1, size: "1024x1024" })
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${TOKENS.openai}` 
+          },
+          body: JSON.stringify({ 
+            prompt: prompt, 
+            n: 1, 
+            size: "1024x1024",
+            response_format: "url"
+          })
         });
+        
         const data = await response.json();
-        Alert.alert("Éxito", "Imagen generada correctamente");
+        if (data.data && data.data[0].url) {
+          setResultUri(data.data[0].url);
+        } else {
+          Alert.alert("Error", "No se pudo generar la imagen. Revisa tu saldo de OpenAI.");
+        }
       }
       
-      // LÓGICA PARA AUDIO (ELEVENLABS)
-      if (mediaType === 'audio') {
-        // Aquí se conectará con el sintetizador de ElevenLabs
-        Alert.alert("Audio", "Conectando con ElevenLabs para voz...");
-      }
+      // La lógica de Video (Replicate) y Audio (ElevenLabs) se activará igual
+      if (mediaType === 'audio') Alert.alert("ElevenLabs", "Generando voz con tu token...");
 
     } catch (err) {
-      Alert.alert("Error", "Algo falló en la conexión.");
+      Alert.alert("Error de Red", "No se pudo conectar con el servidor.");
     } finally {
       setLoading(false);
     }
@@ -47,10 +58,10 @@ export default function App() {
       
       <ScrollView style={styles.content}>
         <View style={styles.card}>
-          <Text style={styles.label}>TU PROMPT MAESTRO:</Text>
+          <Text style={styles.label}>TU PROMPT:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Describe qué quieres crear hoy..."
+            placeholder="Ej: Un astronauta montando un caballo en el espacio..."
             placeholderTextColor="#666"
             multiline
             value={prompt}
@@ -63,25 +74,26 @@ export default function App() {
             <TouchableOpacity 
               key={type} 
               style={[styles.typeBtn, mediaType === type && styles.activeBtn]}
-              onPress={() => setMediaType(type)}
+              onPress={() => { setMediaType(type); setResultUri(null); }}
             >
               <Text style={styles.btnText}>{type.toUpperCase()}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.label}>ESTILOS RÁPIDOS:</Text>
-        <ScrollView horizontal style={styles.templateRow}>
-          {['Futurista', 'Cinemático', 'Voz Narrador', '4K Ultra'].map((item) => (
-            <TouchableOpacity key={item} style={styles.templateCard} onPress={() => setPrompt(item + ": " + prompt)}>
-              <Text style={styles.templateText}>{item}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {/* VISOR DE RESULTADOS */}
+        {resultUri && (
+          <View style={styles.resultContainer}>
+            <Image source={{ uri: resultUri }} style={styles.resultImage} />
+            <Text style={styles.resultText}>¡Generación completada!</Text>
+          </View>
+        )}
+
+        {loading && <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />}
       </ScrollView>
 
       <TouchableOpacity style={styles.generateBtn} onPress={handleGenerate} disabled={loading}>
-        {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.generateText}>GENERAR {mediaType.toUpperCase()}</Text>}
+        <Text style={styles.generateText}>GENERAR {mediaType.toUpperCase()}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -93,14 +105,14 @@ const styles = StyleSheet.create({
   content: { padding: 20 },
   card: { backgroundColor: '#111', padding: 15, borderRadius: 20, borderWidth: 1, borderColor: '#333' },
   label: { color: '#555', fontSize: 12, marginBottom: 10, fontWeight: 'bold' },
-  input: { color: '#fff', fontSize: 18, minHeight: 100 },
-  row: { flexDirection: 'row', marginTop: 20 },
+  input: { color: '#fff', fontSize: 18, minHeight: 80 },
+  row: { flexDirection: 'row', marginTop: 20, marginBottom: 20 },
   typeBtn: { flex: 1, padding: 15, backgroundColor: '#111', borderRadius: 12, marginHorizontal: 5, alignItems: 'center' },
   activeBtn: { backgroundColor: '#007AFF' },
   btnText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  templateRow: { marginTop: 20 },
-  templateCard: { backgroundColor: '#222', padding: 12, borderRadius: 10, marginRight: 10 },
-  templateText: { color: '#fff', fontSize: 12 },
+  resultContainer: { marginTop: 20, alignItems: 'center', backgroundColor: '#111', borderRadius: 20, padding: 10 },
+  resultImage: { width: '100%', height: 300, borderRadius: 15, resizeMode: 'cover' },
+  resultText: { color: '#0f0', marginTop: 10, fontWeight: 'bold' },
   generateBtn: { backgroundColor: '#fff', margin: 25, padding: 20, borderRadius: 20, alignItems: 'center' },
   generateText: { color: '#000', fontWeight: 'bold', fontSize: 16 }
 });
