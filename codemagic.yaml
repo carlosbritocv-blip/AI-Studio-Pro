@@ -4,6 +4,9 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m1
     scripts:
+      - name: Purge Old Files
+        script: |
+          rm -rf android ios node_modules
       - name: Install dependencies
         script: |
           npm install
