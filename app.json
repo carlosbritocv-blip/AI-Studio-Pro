@@ -4,14 +4,9 @@
     "slug": "ai-studio-pro",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "android": {
-      "package": "com.carlosbrito.aistudiopro",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
-      }
+      "package": "com.carlosbrito.aistudiopro"
     }
   }
 }
