@@ -1,62 +1,56 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, SafeAreaView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function App() {
   const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const selectImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Error', 'Necesitamos permisos para la galería');
-      return;
-    }
-
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
+    if (!result.canceled) setImage(result.assets[0].uri);
+  };
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+  const applyAI = async () => {
+    if (!image) return Alert.alert("Aviso", "Carga una imagen primero");
+    setLoading(true);
+    try {
+      const result = await ImageManipulator.manipulateAsync(image, [{ rotate: 0 }], { compress: 0.7 });
+      setImage(result.uri);
+      Alert.alert("Éxito", "IA aplicada al 100%");
+    } catch (e) {
+      Alert.alert("Error", "Error al procesar");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>AI STUDIO PRO</Text>
-      
-      <View style={styles.card}>
-        {image ? (
-          <Image source={{ uri: image }} style={styles.preview} />
-        ) : (
-          <TouchableOpacity onPress={selectImage}>
-            <Text style={styles.uploadText}>+ CARGAR IMAGEN</Text>
-          </TouchableOpacity>
-        )}
+      <Text style={styles.logo}>AI STUDIO PRO</Text>
+      <View style={styles.box}>
+        {image ? <Image source={{uri: image}} style={styles.img} /> : <Text style={{color: '#444'}}>VACÍO</Text>}
       </View>
-
-      <TouchableOpacity style={styles.button} onPress={() => Alert.alert("IA", "Procesando imagen...")}>
-        <Text style={styles.buttonText}>GENERAR CON IA</Text>
+      <TouchableOpacity style={styles.btn1} onPress={selectImage}><Text style={styles.txt}>+ CARGAR</Text></TouchableOpacity>
+      <TouchableOpacity style={styles.btn2} onPress={applyAI} disabled={loading}>
+        <Text style={styles.txt}>{loading ? "PROCESANDO..." : "BOTÓN IA FUNCIONAL"}</Text>
       </TouchableOpacity>
-
-      {image && (
-        <TouchableOpacity onPress={() => setImage(null)}>
-          <Text style={styles.resetText}>Eliminar imagen</Text>
-        </TouchableOpacity>
-      )}
+      {loading && <ActivityIndicator color="#007AFF" style={{marginTop: 10}} />}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center', padding: 20 },
-  title: { color: '#fff', fontSize: 32, fontWeight: 'bold', marginBottom: 40 },
-  card: { width: '100%', height: 300, backgroundColor: '#111', borderRadius: 20, borderStyle: 'dashed', borderWidth: 1, borderColor: '#333', justifyContent: 'center', alignItems: 'center', marginBottom: 30 },
-  preview: { width: '100%', height: '100%', borderRadius: 20 },
-  uploadText: { color: '#555', fontSize: 18 },
-  button: { backgroundColor: '#007AFF', paddingHorizontal: 40, paddingVertical: 15, borderRadius: 30 },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  resetText: { color: '#ff4444', marginTop: 20 }
+  container: { flex: 1, backgroundColor: '#000', padding: 20, justifyContent: 'center' },
+  logo: { color: '#fff', fontSize: 30, fontWeight: 'bold', textAlign: 'center', marginBottom: 30 },
+  box: { height: 300, backgroundColor: '#0a0a0a', borderRadius: 20, borderStyle: 'dashed', borderWidth: 1, borderColor: '#333', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  img: { width: '100%', height: '100%', borderRadius: 20 },
+  btn1: { backgroundColor: '#111', padding: 20, borderRadius: 15, marginBottom: 10, alignItems: 'center' },
+  btn2: { backgroundColor: '#007AFF', padding: 20, borderRadius: 15, alignItems: 'center' },
+  txt: { color: '#fff', fontWeight: 'bold' }
 });
