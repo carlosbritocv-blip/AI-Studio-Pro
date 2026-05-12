@@ -1,84 +1,86 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import { StatusBar } from 'expo-status-bar';
 
 export default function App() {
-  const [selectedAsset, setSelectedAsset] = useState(null);
-
-  const pickMedia = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setSelectedAsset(result.assets[0].uri);
-    }
-  };
-
-  const applyFilter = async () => {
-    if (!selectedAsset) return Alert.alert("Aviso", "Primero selecciona una imagen");
-    
-    const manipResult = await ImageManipulator.manipulateAsync(
-      selectedAsset,
-      [{ flip: ImageManipulator.FlipType.Vertical }],
-      { compress: 1, format: ImageManipulator.SaveFormat.PNG }
-    );
-    setSelectedAsset(manipResult.uri);
-  };
+  const [prompt, setPrompt] = useState('');
+  const [mediaType, setMediaType] = useState('image'); // image, video, audio
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
-      <Text style={styles.logoText}>AI STUDIO PRO</Text>
+      <Text style={styles.title}>AI STUDIO PRO v2.0</Text>
       
-      <View style={styles.canvas}>
-        {selectedAsset ? (
-          <Image source={{ uri: selectedAsset }} style={styles.preview} />
-        ) : (
-          <Text style={styles.placeholder}>Sube contenido para editar o crear con IA</Text>
+      <ScrollView style={styles.content}>
+        {/* ÁREA DE PROMPT */}
+        <View style={styles.card}>
+          <Text style={styles.label}>Describe tu creación:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ej: Paisaje futurista en Marte, estilo cinematográfico..."
+            placeholderTextColor="#666"
+            multiline
+            value={prompt}
+            onChangeText={setPrompt}
+          />
+        </View>
+
+        {/* SELECTOR DE TIPO */}
+        <View style={styles.row}>
+          {['image', 'video', 'audio'].map((type) => (
+            <TouchableOpacity 
+              key={type} 
+              style={[styles.typeBtn, mediaType === type && styles.activeBtn]}
+              onPress={() => setMediaType(type)}
+            >
+              <Text style={styles.btnText}>{type.toUpperCase()}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* SECCIÓN DE PLANTILLAS */}
+        <Text style={styles.label}>Plantillas Populares:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templateRow}>
+          {['Cyberpunk', 'Realista', 'Anime', '3D Render', 'Vintage'].map((item) => (
+            <TouchableOpacity key={item} style={styles.templateCard} onPress={() => setPrompt(prev => prev + " estilo " + item)}>
+              <Text style={styles.templateText}>{item}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* CONFIGURACIÓN DE AUDIO (Solo si es video/audio) */}
+        {(mediaType === 'video' || mediaType === 'audio') && (
+          <View style={styles.card}>
+            <Text style={styles.label}>Ajustes de Sonido:</Text>
+            <TouchableOpacity style={styles.secondaryBtn}>
+              <Text style={styles.btnText}>+ Añadir Voz / Música</Text>
+            </TouchableOpacity>
+          </View>
         )}
-      </View>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.toolbar}>
-        <TouchableOpacity style={styles.toolBtn} onPress={pickMedia}>
-          <Text style={styles.btnIcon}>📁</Text>
-          <Text style={styles.btnText}>Cargar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.toolBtn} onPress={applyFilter}>
-          <Text style={styles.btnIcon}>🎨</Text>
-          <Text style={styles.btnText}>Filtro</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.toolBtn, styles.iaBtn]}>
-          <Text style={styles.btnIcon}>✨</Text>
-          <Text style={styles.btnText}>Crear IA</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.toolBtn}>
-          <Text style={styles.btnIcon}>🎵</Text>
-          <Text style={styles.btnText}>Música</Text>
-        </TouchableOpacity>
       </ScrollView>
+
+      {/* BOTÓN DE ACCIÓN PRINCIPAL */}
+      <TouchableOpacity style={styles.generateBtn}>
+        <Text style={styles.generateText}>GENERAR {mediaType.toUpperCase()}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#121212', paddingTop: 60 },
-  logoText: { color: '#fff', fontSize: 22, fontWeight: 'bold', textAlign: 'center', letterSpacing: 2 },
-  canvas: { width: '90%', height: '60%', backgroundColor: '#1e1e1e', alignSelf: 'center', marginTop: 30, borderRadius: 20, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: '#333' },
-  preview: { width: '100%', height: '100%' },
-  placeholder: { color: '#555', textAlign: 'center', padding: 20 },
-  toolbar: { marginTop: 30, paddingLeft: 20 },
-  toolBtn: { backgroundColor: '#252525', padding: 15, borderRadius: 15, alignItems: 'center', marginRight: 15, width: 85, height: 90 },
-  iaBtn: { borderWeight: 2, borderColor: '#00e5ff', backgroundColor: '#1a2a3a' },
-  btnIcon: { fontSize: 24, marginBottom: 5 },
-  btnText: { color: '#ccc', fontSize: 12, fontWeight: '500' }
+  container: { flex: 1, backgroundColor: '#0a0a0a', paddingTop: 50 },
+  title: { color: '#fff', fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
+  content: { paddingHorizontal: 20 },
+  card: { backgroundColor: '#1a1a1a', padding: 15, borderRadius: 15, marginBottom: 20 },
+  label: { color: '#aaa', fontSize: 14, marginBottom: 10, fontWeight: '600' },
+  input: { color: '#fff', fontSize: 16, minHeight: 80, textAlignVertical: 'top' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  typeBtn: { flex: 1, padding: 12, backgroundColor: '#1a1a1a', marginHorizontal: 5, borderRadius: 10, alignItems: 'center' },
+  activeBtn: { backgroundColor: '#3b82f6' },
+  btnText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
+  templateRow: { marginBottom: 25 },
+  templateCard: { backgroundColor: '#333', padding: 15, borderRadius: 12, marginRight: 10, width: 100, alignItems: 'center' },
+  templateText: { color: '#fff', fontSize: 12 },
+  secondaryBtn: { backgroundColor: '#222', padding: 15, borderRadius: 10, alignItems: 'center', borderStyle: 'dashed', borderWidth: 1, borderColor: '#444' },
+  generateBtn: { backgroundColor: '#fff', margin: 20, padding: 18, borderRadius: 15, alignItems: 'center' },
+  generateText: { color: '#000', fontWeight: 'bold', fontSize: 18 }
 });
-
