@@ -6,6 +6,9 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
+    "splash": {
+      "backgroundColor": "#000000"
+    },
     "android": {
       "package": "com.carlosbrito.aistudiopro",
       "adaptiveIcon": {
