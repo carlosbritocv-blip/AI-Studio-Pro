@@ -6,18 +6,20 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "android": {
-      "package": "com.carlosbrito.aistudiopro"
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
     },
-    "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "La aplicación necesita acceder a tus fotos para editarlas con IA."
-        }
-      ],
-      "expo-image-manipulator",
-      "expo-media-library"
-    ]
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.carlosbrito.aistudiopro",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      }
+    }
   }
 }
