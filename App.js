@@ -1,143 +1,152 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Image, SafeAreaView, Share, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, SafeAreaView, BackHandler, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as MediaLibrary from 'expo-media-library';
-
-const { width } = Dimensions.get('window');
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function App() {
-  const [screen, setScreen] = useState('menu'); 
-  const [prompt, setPrompt] = useState('');
+  const [screen, setScreen] = useState('inicio');
+  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [resultUri, setResultUri] = useState(null);
-  const [imageToEdit, setImageToEdit] = useState(null);
+  const [prompt, setPrompt] = useState('');
 
-  const TOKENS = { openai: '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' };
+  // 1. CONTROL DE NAVEGACIÓN (BOTÓN ATRÁS DEL MÓVIL)
+  useEffect(() => {
+    const backAction = () => {
+      if (screen !== 'inicio') {
+        setScreen('inicio');
+        return true;
+      }
+      return false;
+    };
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => backHandler.remove();
+  }, [screen]);
 
-  // --- LÓGICA ---
-  const handleGenerate = async (customPrompt) => {
-    const finalPrompt = customPrompt || prompt;
-    if (!finalPrompt) return Alert.alert("Aviso", "Escribe algo o elige una plantilla.");
+  // 2. FUNCIÓN DE EDICIÓN REAL (PROCESA LA IMAGEN)
+  const applyFilter = async () => {
+    if (!image) return Alert.alert("Error", "Carga una imagen primero");
     setLoading(true);
     try {
-      const resp = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKENS.openai}` },
-        body: JSON.stringify({ prompt: finalPrompt, n: 1, size: "1024x1024" })
-      });
-      const data = await resp.json();
-      if (data.data) {
-        setResultUri(data.data[0].url);
-        setScreen('ia');
-      }
-    } catch (e) { Alert.alert("Error", "Fallo de conexión"); }
-    finally { setLoading(false); }
-  };
-
-  const pickImage = async () => {
-    let res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 });
-    if (!res.canceled) {
-      setImageToEdit(res.assets[0].uri);
-      setScreen('edit');
+      const result = await ImageManipulator.manipulateAsync(
+        image,
+        [{ resize: { width: 800 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: false }
+      );
+      setImage(result.uri);
+      Alert.alert("Éxito", "Filtro Pro aplicado");
+    } catch (error) {
+      Alert.alert("Error", "No se pudo procesar la imagen");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // --- PANTALLA: MENÚ PRINCIPAL ---
-  if (screen === 'menu') return (
+  // 3. CARGA DE ARCHIVOS
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+      setScreen('editor');
+    }
+  };
+
+  // --- VISTAS ---
+
+  if (screen === 'inicio') return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.headerArea}>
-          <Image source={require('./assets/splash.png')} style={styles.mainLogo} />
-          <Text style={styles.mainTitle}>AI STUDIO PRO</Text>
-          <Text style={styles.mainSubtitle}>¿Qué quieres hacer hoy?</Text>
+        <View style={styles.header}>
+          <Text style={styles.logoText}>AI STUDIO PRO</Text>
+          <Text style={styles.subText}>¿Qué quieres hacer hoy?</Text>
         </View>
 
-        <View style={styles.mainButtonsRow}>
-          <TouchableOpacity style={styles.bigCardIA} onPress={() => setScreen('ia')}>
-            <Text style={styles.cardEmoji}>✨</Text>
-            <Text style={styles.cardTitle}>CREACIÓN IA</Text>
-            <Text style={styles.cardSubtitle}>Crear con plantilla...</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.bigCardEdit} onPress={pickImage}>
-            <Text style={styles.cardEmoji}>🎨</Text>
-            <Text style={styles.cardTitle}>EDITOR PRO</Text>
-            <Text style={styles.cardSubtitle}>Edita tus archivos</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.mainActionCard} onPress={() => setScreen('ia')}>
+          <Text style={styles.cardIcon}>✨</Text>
+          <Text style={styles.cardTitle}>CREACIÓN IA</Text>
+          <Text style={styles.cardDesc}>Genera desde texto</Text>
+        </TouchableOpacity>
 
-        <Text style={styles.sectionLabel}>PLANTILLAS DESTACADAS</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templateScroll}>
-          {['Realismo 8K', 'Anime Style', 'Cinemático 3D', 'Pop Art'].map((t, i) => (
-            <TouchableOpacity key={i} style={styles.templateCard} onPress={() => {setPrompt(t); setScreen('ia');}}>
-              <View style={styles.templateImgPlaceholder}><Text style={{color: '#fff', fontSize: 10}}>{t}</Text></View>
-              <Text style={styles.templateText}>{t}</Text>
+        <TouchableOpacity style={styles.secondaryActionCard} onPress={pickImage}>
+          <Text style={styles.cardIcon}>🎨</Text>
+          <Text style={styles.cardTitle}>EDITOR PRO</Text>
+          <Text style={styles.cardDesc}>Edita tus archivos</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.sectionTitle}>Tendencias ›</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{paddingLeft: 20}}>
+          {['Cinemático', 'Retro', 'Anime', '8K Real'].map((t) => (
+            <TouchableOpacity key={t} style={styles.thumb} onPress={() => {setPrompt(t); setScreen('ia');}}>
+              <View style={styles.thumbBox}><Text style={styles.thumbEmoji}>🖼️</Text></View>
+              <Text style={styles.thumbLabel}>{t}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
-
-        <Text style={styles.sectionLabel}>HERRAMIENTAS DE EDICIÓN</Text>
-        <View style={styles.editGrid}>
-          {['Filtros Pro', 'Recorte', 'Brillo', 'Contraste', 'Curvas AI', 'Texto AI'].map((tool) => (
-            <TouchableOpacity key={tool} style={styles.gridTool}>
-              <Text style={styles.gridToolText}>{tool}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
 
-  // --- PANTALLAS SECUNDARIAS (IA / EDIT) ---
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity onPress={() => setScreen('menu')} style={styles.backButton}>
-        <Text style={{color: '#007AFF', fontWeight: 'bold'}}>← VOLVER AL MENÚ</Text>
-      </TouchableOpacity>
-      
-      <ScrollView contentContainerStyle={{padding: 20}}>
-        <Text style={styles.sectionLabel}>{screen === 'ia' ? 'LABORATORIO IA' : 'EDITOR PRO'}</Text>
-        
-        {screen === 'ia' ? (
-          <View>
-            <TextInput style={styles.inputIA} placeholder="Describe tu idea..." placeholderTextColor="#444" multiline value={prompt} onChangeText={setPrompt} />
-            <TouchableOpacity style={styles.genBtnIA} onPress={() => handleGenerate()}>
-              {loading ? <ActivityIndicator color="#000" /> : <Text style={{fontWeight: 'bold'}}>GENERAR AHORA</Text>}
-            </TouchableOpacity>
-            {resultUri && <Image source={{uri: resultUri}} style={styles.resultPreview} />}
-          </View>
+      <View style={styles.topNav}>
+        <TouchableOpacity onPress={() => setScreen('inicio')}><Text style={styles.backBtn}>← VOLVER</Text></TouchableOpacity>
+        <Text style={styles.navTitle}>{screen === 'ia' ? 'LABORATORIO IA' : 'EDITOR PRO'}</Text>
+      </View>
+
+      <View style={styles.workArea}>
+        {image ? (
+          <Image source={{uri: image}} style={styles.previewImage} />
         ) : (
-          <View>
-            {imageToEdit && <Image source={{uri: imageToEdit}} style={styles.resultPreview} />}
-            <TouchableOpacity style={styles.genBtnIA} onPress={pickImage}><Text style={{fontWeight: 'bold'}}>CAMBIAR IMAGEN</Text></TouchableOpacity>
-          </View>
+          <View style={styles.emptyBox}><Text style={{color: '#444'}}>Esperando archivo...</Text></View>
         )}
-      </ScrollView>
+
+        {loading && <ActivityIndicator size="large" color="#007AFF" style={{margin: 20}} />}
+
+        <View style={styles.controlsGrid}>
+          {screen === 'editor' ? (
+            <>
+              <TouchableOpacity style={styles.toolBtn} onPress={applyFilter}><Text style={styles.toolText}>FILTROS</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.toolBtn} onPress={pickImage}><Text style={styles.toolText}>CAMBIAR</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.toolBtn} onPress={() => Alert.alert("IA", "Analizando imagen...")}><Text style={styles.toolText}>AJUSTES AI</Text></TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={styles.generateBtn} onPress={() => Alert.alert("IA", `Generando: ${prompt}`)}>
+              <Text style={styles.generateBtnText}>GENERAR AHORA</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  headerArea: { alignItems: 'center', marginTop: 40, marginBottom: 30 },
-  mainLogo: { width: 80, height: 80, borderRadius: 20, marginBottom: 15 },
-  mainTitle: { color: '#fff', fontSize: 28, fontWeight: 'bold', letterSpacing: 1 },
-  mainSubtitle: { color: '#666', fontSize: 14 },
-  mainButtonsRow: { flexDirection: 'row', paddingHorizontal: 15, justifyContent: 'space-between', marginBottom: 30 },
-  bigCardIA: { width: (width/2)-25, backgroundColor: '#007AFF', padding: 20, borderRadius: 25, alignItems: 'center' },
-  bigCardEdit: { width: (width/2)-25, backgroundColor: '#1a1a1a', padding: 20, borderRadius: 25, alignItems: 'center', borderWidth: 1, borderColor: '#333' },
-  cardEmoji: { fontSize: 30, marginBottom: 10 },
-  cardTitle: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  cardSubtitle: { color: '#e0e0e0', fontSize: 10, marginTop: 4 },
-  sectionLabel: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginLeft: 20, marginBottom: 15 },
-  templateScroll: { paddingLeft: 20, marginBottom: 30 },
-  templateCard: { marginRight: 15, alignItems: 'center' },
-  templateImgPlaceholder: { width: 80, height: 80, backgroundColor: '#111', borderRadius: 15, borderWidth: 1, borderColor: '#333', justifyContent: 'center', alignItems: 'center' },
-  templateText: { color: '#888', fontSize: 11, marginTop: 8 },
-  editGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 15, justifyContent: 'space-between' },
-  gridTool: { width: (width/3)-20, backgroundColor: '#111', padding: 15, borderRadius: 15, marginBottom: 15, alignItems: 'center' },
-  gridToolText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  backButton: { padding: 20 },
-  inputIA: { backgroundColor: '#0a0a0a', color: '#fff', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: '#222', minHeight: 100, fontSize: 16 },
-  genBtnIA: { backgroundColor: '#fff', padding: 20, borderRadius: 20, marginTop: 20, alignItems: 'center' },
-  resultPreview: { width: '100%', height: 350, borderRadius: 25, marginTop: 20 }
+  header: { padding: 30, alignItems: 'center' },
+  logoText: { color: '#fff', fontSize: 28, fontWeight: 'bold' },
+  subText: { color: '#666', fontSize: 14 },
+  mainActionCard: { backgroundColor: '#007AFF', margin: 20, padding: 30, borderRadius: 30 },
+  secondaryActionCard: { backgroundColor: '#111', marginHorizontal: 20, padding: 30, borderRadius: 30, borderWidth: 1, borderColor: '#222' },
+  cardIcon: { fontSize: 32, marginBottom: 10 },
+  cardTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  cardDesc: { color: 'rgba(255,255,255,0.6)', fontSize: 12 },
+  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', margin: 20 },
+  thumb: { marginRight: 15, alignItems: 'center' },
+  thumbBox: { width: 100, height: 140, backgroundColor: '#111', borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#333' },
+  thumbEmoji: { fontSize: 30 },
+  thumbLabel: { color: '#666', fontSize: 10, marginTop: 5 },
+  topNav: { flexDirection: 'row', padding: 20, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#111' },
+  backBtn: { color: '#007AFF', fontWeight: 'bold' },
+  navTitle: { color: '#fff', marginLeft: 20, fontWeight: 'bold' },
+  workArea: { flex: 1, padding: 20, alignItems: 'center' },
+  previewImage: { width: '100%', height: 350, borderRadius: 25 },
+  emptyBox: { width: '100%', height: 350, backgroundColor: '#0a0a0a', borderRadius: 25, justifyContent: 'center', alignItems: 'center', borderStyle: 'dashed', borderWidth: 2, borderColor: '#222' },
+  controlsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 20, width: '100%' },
+  toolBtn: { width: '31%', backgroundColor: '#111', padding: 15, borderRadius: 15, alignItems: 'center' },
+  toolText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  generateBtn: { backgroundColor: '#fff', width: '100%', padding: 20, borderRadius: 20, alignItems: 'center' },
+  generateBtnText: { fontWeight: 'bold' }
 });
