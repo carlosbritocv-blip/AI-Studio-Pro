@@ -1,14 +1,19 @@
 workflows:
-  android-workflow:
-    name: Ai Studio Pro Android
+  android-apk:
+    name: Ai Studio Pro APK Generator
     instance_type: mac_mini_m1
     max_build_duration: 30
     environment:
+      groups:
+        - expo
       node: latest
     scripts:
       - name: Install dependencies
         script: npm install
-      - name: Expo Export
-        script: npx expo export
+      - name: Build Android APK
+        script: |
+          npx expo prebuild
+          cd android
+          ./gradlew assembleRelease
     artifacts:
-      - dist/**/*
+      - android/app/build/outputs/apk/release/*.apk
