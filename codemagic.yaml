@@ -4,15 +4,15 @@ workflows:
     instance_type: mac_mini_m1
     max_build_duration: 30
     environment:
-      groups:
-        - expo
       node: latest
     scripts:
       - name: Install dependencies
-        script: npm install
+        script: |
+          npm install
+          npm install -g expo-cli
       - name: Build Android APK
         script: |
-          npx expo prebuild
+          npx expo prebuild --platform android
           cd android
           ./gradlew assembleRelease
     artifacts:
