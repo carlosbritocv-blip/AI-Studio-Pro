@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "AI Studio Pro",
+    "slug": "ai-studio-pro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0a0f"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.aistudiopro.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "AI Studio Pro necesita acceso a la cámara para capturar fotos y vídeos.",
+        "NSPhotoLibraryUsageDescription": "AI Studio Pro necesita acceso a tu galería para editar tus fotos y vídeos.",
+        "NSPhotoLibraryAddUsageDescription": "AI Studio Pro guardará tus creaciones en la galería.",
+        "NSMicrophoneUsageDescription": "AI Studio Pro necesita el micrófono para grabar vídeos con audio."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0a0f"
+      },
+      "package": "com.aistudiopro.app",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "RECORD_AUDIO",
+        "INTERNET"
+      ],
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "minSdkVersion": 24
+    },
+    "plugins": [
+      "expo-router",
+      "expo-av",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "AI Studio Pro accederá a tus fotos para editarlas.",
+          "cameraPermission": "AI Studio Pro accederá a tu cámara."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Permite guardar tus creaciones.",
+          "savePhotosPermission": "Permite guardar en tu galería.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ],
+    "scheme": "ai-studio-pro",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
