@@ -2,23 +2,22 @@ workflows:
   android-debug:
     name: AI Studio Pro - Debug
     max_build_duration: 60
+    instance_type: mac_mini_m2
     environment:
       node: 20.11.0
       java: 17
-      groups:
-        - keystore_credentials
     scripts:
       - name: Install dependencies
         script: |
           npm install
-      - name: Expo Prebuild (Forced)
+      - name: Expo Prebuild
         script: |
           npx expo prebuild --platform android --clean --non-interactive
-      - name: Configure Gradle
+      - name: Fix Gradle Permissions & Memory
         script: |
           cd android
-          echo "org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m" >> gradle.properties
           chmod +x gradlew
+          echo "org.gradle.jvmargs=-Xmx2048m" >> gradle.properties
       - name: Build APK
         script: |
           cd android
