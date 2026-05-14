@@ -1,6 +1,6 @@
 workflows:
   android-debug:
-    name: AI Studio Pro - Debug
+    name: AI Studio Pro - Fix Gradle
     max_build_duration: 60
     environment:
       node: 20.11.0
@@ -11,15 +11,18 @@ workflows:
           npm install
       - name: Clean and Prebuild
         script: |
-          # Borramos cualquier rastro de configuraciones viejas
           rm -rf android
           npx expo prebuild --platform android --clean --non-interactive
+      - name: Force Gradle Version
+        script: |
+          cd android
+          # Esto obliga a usar Gradle 8.3, evitando el error de la versión 8.8
+          ./gradlew wrapper --gradle-version 8.3
       - name: Build APK
         script: |
           cd android
           chmod +x gradlew
-          # Usamos este comando para ignorar las advertencias de versiones que viste en el log
-          ./gradlew assembleDebug -Dorg.gradle.project.android.useAndroidX=true -Dorg.gradle.project.android.enableJetifier=true --no-daemon
+          ./gradlew assembleDebug --no-daemon
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
     publishing:
