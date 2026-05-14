@@ -5,18 +5,24 @@ workflows:
     environment:
       node: 20.11.0
       java: 17
+      groups:
+        - keystore_credentials
     scripts:
       - name: Install dependencies
         script: |
           npm install
-      - name: Expo Prebuild
+      - name: Expo Prebuild (Forced)
         script: |
           npx expo prebuild --platform android --clean --non-interactive
+      - name: Configure Gradle
+        script: |
+          cd android
+          echo "org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m" >> gradle.properties
+          chmod +x gradlew
       - name: Build APK
         script: |
           cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
     publishing:
