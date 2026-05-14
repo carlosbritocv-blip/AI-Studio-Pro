@@ -1,6 +1,6 @@
 workflows:
   android-debug:
-    name: AI Studio Pro - APK Debug (sin firma)
+    name: AI Studio Pro - Debug
     max_build_duration: 60
     environment:
       node: 20.11.0
@@ -9,78 +9,20 @@ workflows:
       - name: Install dependencies
         script: |
           npm install
-      - name: Expo prebuild
+      - name: Clean and Prebuild
         script: |
-          npx expo prebuild --platform android --clean
-      - name: Fix Gradle Permissions & Memory
-        script: |
-          chmod +x android/gradlew
-          # Aumentar memoria de Gradle
-          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
-          echo "org.gradle.daemon=false" >> android/gradle.properties
-          echo "org.gradle.parallel=false" >> android/gradle.properties
-          echo "android.useAndroidX=true" >> android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
-      - name: Fix local.properties
-        script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+          # Borramos cualquier rastro de configuraciones viejas
+          rm -rf android
+          npx expo prebuild --platform android --clean --non-interactive
       - name: Build APK
         script: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          chmod +x gradlew
+          # Usamos este comando para ignorar las advertencias de versiones que viste en el log
+          ./gradlew assembleDebug -Dorg.gradle.project.android.useAndroidX=true -Dorg.gradle.project.android.enableJetifier=true --no-daemon
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
     publishing:
       email:
         recipients:
-          - your@email.com
-        notify:
-          success: true
-          failure: true
-
-  android-release:
-    name: AI Studio Pro - APK Release (firmada)
-    max_build_duration: 60
-    environment:
-      node: 20.11.0
-      java: 17
-      groups:
-        - keystore_credentials
-    scripts:
-      - name: Install dependencies
-        script: |
-          npm install
-      - name: Expo prebuild
-        script: |
-          npx expo prebuild --platform android --clean
-      - name: Fix Gradle Permissions & Memory
-        script: |
-          chmod +x android/gradlew
-          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
-          echo "org.gradle.daemon=false" >> android/gradle.properties
-          echo "org.gradle.parallel=false" >> android/gradle.properties
-          echo "android.useAndroidX=true" >> android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
-      - name: Fix local.properties
-        script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
-      - name: Set up keystore
-        script: |
-          echo $CM_KEYSTORE | base64 --decode > /tmp/keystore.jks
-      - name: Build APK Release
-        script: |
-          cd android
-          ./gradlew assembleRelease --no-daemon --stacktrace \
-            -Pandroid.injected.signing.store.file=/tmp/keystore.jks \
-            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \
-            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \
-            -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
-    artifacts:
-      - android/app/build/outputs/apk/release/app-release.apk
-    publishing:
-      email:
-        recipients:
-          - your@email.com
-        notify:
-          success: true
-          failure: true
+          - carlosbrito.cv@gmail.com
