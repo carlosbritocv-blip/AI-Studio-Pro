@@ -1,24 +1,69 @@
 workflows:
-  android-expo-managed:
-    name: Ai Studio Pro Android Build
+  android-release:
+    name: AI Studio Pro - Android APK
     max_build_duration: 60
-    instance_type: mac_mini_m1
+    environment:
+      node: 20.11.0
+      vars:
+        PACKAGE_NAME: "com.aistudiopro.app"
+      groups:
+        - keystore_credentials
     scripts:
-      - name: Purge Old Files
-        script: |
-          rm -rf android ios node_modules
       - name: Install dependencies
         script: |
           npm install
-      - name: Expo Prebuild
+      - name: Set up local.properties
         script: |
-          npx expo prebuild --platform android --no-install
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Expo prebuild
+        script: |
+          npx expo prebuild --platform android --clean
+      - name: Set up keystore
+        script: |
+          echo $CM_KEYSTORE | base64 --decode > /tmp/keystore.jks
       - name: Build Android APK
         script: |
-          cd android && ./gradlew clean && ./gradlew assembleRelease
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=/tmp/keystore.jks \
+            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
     artifacts:
-      - android/app/build/outputs/apk/release/*.apk
+      - android/app/build/outputs/apk/release/app-release.apk
+      - android/app/build/outputs/apk/release/app-release-unsigned.apk
     publishing:
       email:
         recipients:
-          - carlosbrito.cv@gmail.com
+          - your@email.com
+        notify:
+          success: true
+          failure: true
+
+  android-debug:
+    name: AI Studio Pro - Android APK (Debug, sin firma)
+    max_build_duration: 60
+    environment:
+      node: 20.11.0
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Expo prebuild
+        script: |
+          npx expo prebuild --platform android --clean
+      - name: Build debug APK
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/apk/debug/app-debug.apk
+    publishing:
+      email:
+        recipients:
+          - your@email.com
+        notify:
+          success: true
+          failure: true
