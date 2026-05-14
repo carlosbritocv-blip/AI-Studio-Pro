@@ -41,7 +41,7 @@ workflows:
           success: true
           failure: true
 
-  android-debug:
+    android-debug:
     name: AI Studio Pro - Android APK (Debug, sin firma)
     max_build_duration: 60
     environment:
@@ -53,6 +53,10 @@ workflows:
       - name: Expo prebuild
         script: |
           npx expo prebuild --platform android --clean
+      - name: Install expo modules
+        script: |
+          cd android
+          npx install-expo-modules
       - name: Build debug APK
         script: |
           cd android
@@ -63,7 +67,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - your@email.com
+          - carlosbrito.cv@gmail.com
         notify:
           success: true
           failure: true
