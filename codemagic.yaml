@@ -32,16 +32,15 @@ workflows:
             -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
     artifacts:
       - android/app/build/outputs/apk/release/app-release.apk
-      - android/app/build/outputs/apk/release/app-release-unsigned.apk
     publishing:
       email:
         recipients:
-          - your@email.com
+          - carlosbrito.cv@gmail.com
         notify:
           success: true
           failure: true
 
-    android-debug:
+  android-debug:
     name: AI Studio Pro - Android APK (Debug, sin firma)
     max_build_duration: 60
     environment:
