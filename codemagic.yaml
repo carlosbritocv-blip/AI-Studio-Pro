@@ -1,34 +1,33 @@
 workflows:
   android-debug:
-    name: AI Studio Pro - Total Clean
+    name: AI Studio Pro - Final Fix
     max_build_duration: 60
     environment:
       node: 20.11.0
       java: 17
     scripts:
-      - name: Force Clean Cache & Environment
-        script: |
-          # Borramos carpetas de caché de Gradle y NPM manualmente
-          rm -rf ~/.gradle/caches
-          rm -rf ~/.npm
-          rm -rf android
-          rm -rf node_modules
       - name: Install dependencies
         script: |
           npm install
       - name: Expo Prebuild
         script: |
+          rm -rf android
           npx expo prebuild --platform android --clean --non-interactive
-      - name: Patch Namespaces
+      - name: Force Fix Namespaces & SDK
         script: |
-          # Corregimos el error de "Namespace not specified" de tus capturas
+          # Esto busca CUALQUIER build.gradle y le inyecta el namespace si no lo tiene
           find android -name "build.gradle" -exec sed -i '' '/android {/a \
-          \    namespace "com.aistudiopro.fix"' {} + || true
+          \    namespace "com.aistudiopro.fix" \
+          \    compileSdkVersion 34' {} + || true
+          
+          # Forzamos la versión del buildTools para que coincida con lo que pide el log
+          echo "android.experimental.privacySandboxSdk.enable=false" >> android/gradle.properties
+          echo "android.nonTransitiveRClass=false" >> android/gradle.properties
       - name: Build APK
         script: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon -Dorg.gradle.cache.mode=rebuild
+          ./gradlew assembleDebug --no-daemon -Dorg.gradle.project.android.useAndroidX=true -Dorg.gradle.project.android.enableJetifier=true
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
     publishing:
