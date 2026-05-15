@@ -9,24 +9,20 @@ workflows:
         - keystore_credentials
         - expo_credentials
     scripts:
-      - name: Install dependencies and fix
+      - name: Install dependencies
         script: |
           npm install
-          # Forzamos la corrección de versiones que pide el error
-          npx expo install --check
       - name: Install EAS CLI
         script: |
           npm install -g eas-cli
       - name: Build APK with EAS locally
         script: |
-          # Usamos --clear-cache para asegurar limpieza total
           eas build \
             --platform android \
             --profile preview \
             --local \
             --non-interactive \
-            --output ./app-release.apk \
-            --clear-cache
+            --output ./app-release.apk
     artifacts:
       - app-release.apk
       - "*.apk"
