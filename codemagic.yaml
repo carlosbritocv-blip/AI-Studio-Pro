@@ -9,29 +9,23 @@ workflows:
       - name: Install Dependencies
         script: |
           npm install
-          # Instalamos la CLI de Expo para tener comandos de exportación
-          npm install -g expo-cli
       - name: Expo Prebuild
         script: |
           # Generamos la carpeta android limpia
           npx expo prebuild --platform android --clean
-      - name: Build JS Bundle and Assets
+      - name: Prepare Assets Folder
         script: |
-          # Creamos las carpetas necesarias por si acaso
+          # Creamos la carpeta de assets manualmente para evitar el error de Gradle
           mkdir -p android/app/src/main/assets
-          mkdir -p android/app/src/main/res/drawable-mdpi
-          
-          # Generamos el bundle de código de forma explícita
-          npx expo export:embed --platform android --dev false --output-dir android/app/src/main/assets
       - name: Compile Release APK
         script: |
           export NODE_BINARY=$(command -v node)
           cd android
-          # Limpiamos y compilamos ignorando errores menores de linting
+          # Limpiamos y compilamos
           ./gradlew clean
           ./gradlew assembleRelease -x lint
           
-          # Copiamos el resultado
+          # Copiamos el APK generado a la raíz
           cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro-Final.apk
     artifacts:
       - AI-Studio-Pro-Final.apk
