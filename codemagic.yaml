@@ -1,28 +1,36 @@
 workflows:
   android-apk:
-    name: AI Studio Pro Build
+    name: AI Studio Pro - Build Directo
     max_build_duration: 60
     environment:
       node: 20.18.0
       java: 17
     scripts:
-      - name: Install and Fix Sharp
+      - name: Instalación Limpia y Motor de Imagen
         script: |
+          # 1. Borrar todo rastro de instalaciones previas
+          rm -rf node_modules package-lock.json
+          
+          # 2. Instalar dependencias forzando la compatibilidad con Linux 64bit
           npm install --legacy-peer-deps
-          # Forzamos la instalación de la arquitectura correcta de sharp para Linux
           npm install --platform=linux --arch=x64 sharp
-      - name: Prebuild resources
+          
+      - name: Generación Forzada de Recursos
         script: |
+          # 3. Eliminar la carpeta android si existe (esto es vital)
           rm -rf android
-          # Generamos la carpeta nativa y los iconos
+          
+          # 4. Generar el código nativo e ICONOS
           npx expo prebuild --platform android --clean --no-install
-      - name: Verify Icons (Si esto falla, el log nos dirá por qué)
+          
+      - name: Compilación de Binarios
         script: |
-          ls -R android/app/src/main/res/mipmap-* || echo "ICONOS NO GENERADOS"
-      - name: Build APK
-        script: |
+          export NODE_BINARY=$(command -v node)
           cd android
+          # 5. Limpieza de Gradle y compilación directa
+          ./gradlew clean
           ./gradlew assembleRelease -x lint --no-daemon
+          
           cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro.apk
     artifacts:
       - AI-Studio-Pro.apk
