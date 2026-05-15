@@ -1,0 +1,33 @@
+workflows:
+  android-eas-apk:
+    name: AI Studio Pro - APK via EAS
+    max_build_duration: 60
+    environment:
+      node: 20.11.0
+      java: 17
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Install EAS CLI
+        script: |
+          npm install -g eas-cli expo-cli
+      - name: Build APK with EAS locally
+        script: |
+          # EAS local build — gestiona Gradle automáticamente
+          npx eas-cli build \
+            --platform android \
+            --profile preview \
+            --local \
+            --non-interactive \
+            --output ./app-release.apk
+    artifacts:
+      - app-release.apk
+      - "*.apk"
+    publishing:
+      email:
+        recipients:
+          - your@email.com
+        notify:
+          success: true
+          failure: true
