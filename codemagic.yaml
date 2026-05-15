@@ -12,17 +12,24 @@ workflows:
       - name: Install dependencies
         script: |
           npm install
-      - name: Install EAS CLI
+      - name: Fix Kotlin Version and Install EAS
         script: |
+          # Instalamos EAS
           npm install -g eas-cli
+          # Forzamos la versión de Kotlin en todo el proyecto antes de compilar
+          export KOTLIN_VERSION=1.9.24
       - name: Build APK with EAS locally
         script: |
+          # Usamos env vars para forzar a Gradle a usar Kotlin moderno
+          EAS_NO_VCS=1 \
+          KOTLIN_VERSION=1.9.24 \
           eas build \
             --platform android \
             --profile preview \
             --local \
             --non-interactive \
-            --output ./app-release.apk
+            --output ./app-release.apk \
+            --clear-cache
     artifacts:
       - app-release.apk
       - "*.apk"
