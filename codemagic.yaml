@@ -9,20 +9,16 @@ workflows:
         - keystore_credentials
         - expo_credentials
     scripts:
-      - name: Install dependencies
+      - name: Install dependencies and Expo plugin
         script: |
           npm install
-      - name: Fix Kotlin Version and Install EAS
-        script: |
-          # Instalamos EAS
+          # Instalamos el plugin oficial para configurar Kotlin
+          npx expo install expo-build-properties
           npm install -g eas-cli
-          # Forzamos la versión de Kotlin en todo el proyecto antes de compilar
-          export KOTLIN_VERSION=1.9.24
       - name: Build APK with EAS locally
         script: |
-          # Usamos env vars para forzar a Gradle a usar Kotlin moderno
+          # Limpiamos caché para que lea el nuevo app.json correctamente
           EAS_NO_VCS=1 \
-          KOTLIN_VERSION=1.9.24 \
           eas build \
             --platform android \
             --profile preview \
