@@ -2,6 +2,7 @@
   "expo": {
     "name": "AI Studio Pro",
     "slug": "ai-studio-pro",
+    "owner": "carlosbritocvs-organization",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
