@@ -58,6 +58,11 @@
     "scheme": "ai-studio-pro",
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "baf2e0e6-b20f-41c9-9ad9-fee63cbd82d8"
+      }
     }
   }
 }
