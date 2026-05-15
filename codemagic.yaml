@@ -1,34 +1,29 @@
 workflows:
   android-apk:
-    name: AI Studio Pro - Production Build
+    name: AI Studio Pro - Final Release
     max_build_duration: 60
     environment:
-      node: 20.18.0  # Volvemos a 20, es mejor para Expo 51
+      node: 20.18.0
       java: 17
     scripts:
-      - name: Environment Setup
+      - name: Hard Install
         script: |
-          npm install -g expo-cli
-          npm install --legacy-peer-deps
+          # Instalamos dependencias y forzamos la herramienta de imagen
+          npm install
+          npm install -g sharp-cli
       - name: Clean and Prebuild
         script: |
-          # Limpieza total de rastros antiguos
+          # Borramos cualquier rastro de la carpeta android antigua
           rm -rf android
-          # Forzamos la generación de la carpeta nativa
-          npx expo prebuild --platform android --clean --no-install
-      - name: Check Resources (Debug Step)
-        script: |
-          # Verificamos si los iconos existen antes de seguir
-          if [ ! -d "android/app/src/main/res/mipmap-hdpi" ]; then
-            echo "ERROR: Los iconos no se generaron. Revisa los nombres en assets/"
-            exit 1
-          fi
-      - name: Build Android Release
+          # Generamos el código nativo forzando la creación de recursos
+          npx expo prebuild --platform android --clean
+      - name: Compile Release APK
         script: |
           export NODE_BINARY=$(command -v node)
           cd android
-          # Usamos --no-daemon para ahorrar memoria en el servidor
-          ./gradlew assembleRelease -x lint --no-daemon
+          # Limpiamos caché de Gradle antes de empezar
+          ./gradlew clean
+          ./gradlew assembleRelease -x lint
           
           cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro-Final.apk
     artifacts:
