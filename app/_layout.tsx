@@ -1,5 +1,4 @@
 // app/_layout.tsx
-import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,14 +10,13 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.container}>
       <AppProvider>
         <StatusBar style="light" backgroundColor="#0a0a0f" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="editor/image" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="editor/video" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="generate/image" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="generate/video" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="settings" options={{ headerShown: false, presentation: 'modal' }} />
-        </Stack>
+        {/* Dejamos que Expo Router gestione las rutas automáticamente */}
+        <Stack 
+          screenOptions={{ 
+            headerShown: false,
+            animation: 'slide_from_right'
+          }} 
+        />
       </AppProvider>
     </GestureHandlerRootView>
   );
