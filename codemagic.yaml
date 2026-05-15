@@ -12,15 +12,17 @@ workflows:
       - name: Install dependencies
         script: |
           npm install
+          # Esto corrige automáticamente las versiones de Expo que estén mal
+          npx expo install --check
       - name: Install EAS CLI
         script: |
           npm install -g eas-cli
       - name: Login to Expo
         script: |
-          # Esto verifica que el token funciona correctamente
           eas whoami
       - name: Build APK with EAS locally
         script: |
+          # Añadimos --no-wait por si acaso, aunque al ser local no debería influir
           eas build \
             --platform android \
             --profile preview \
