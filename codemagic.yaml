@@ -1,33 +1,31 @@
 workflows:
   android-apk:
-    name: AI Studio Pro - Final Build
+    name: AI Studio Pro Build
     max_build_duration: 60
     environment:
       node: 20.18.0
       java: 17
     scripts:
-      - name: Install Sharp and Dependencies
+      - name: Install and Fix Sharp
         script: |
-          # Instalamos sharp globalmente para que Expo pueda procesar los iconos
-          npm install -g sharp-cli
           npm install --legacy-peer-deps
-      - name: Force Expo Prebuild
+          # Forzamos la instalación de la arquitectura correcta de sharp para Linux
+          npm install --platform=linux --arch=x64 sharp
+      - name: Prebuild resources
         script: |
-          # Borramos cualquier rastro previo para evitar conflictos de recursos
           rm -rf android
-          # Generamos la carpeta nativa limpia
+          # Generamos la carpeta nativa y los iconos
           npx expo prebuild --platform android --clean --no-install
-      - name: Build Android APK
+      - name: Verify Icons (Si esto falla, el log nos dirá por qué)
         script: |
-          export NODE_BINARY=$(command -v node)
+          ls -R android/app/src/main/res/mipmap-* || echo "ICONOS NO GENERADOS"
+      - name: Build APK
+        script: |
           cd android
-          # Limpiamos caché de Gradle antes de compilar
-          ./gradlew clean
           ./gradlew assembleRelease -x lint --no-daemon
-          
-          cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro-Final.apk
+          cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro.apk
     artifacts:
-      - AI-Studio-Pro-Final.apk
+      - AI-Studio-Pro.apk
     publishing:
       email:
         recipients:
