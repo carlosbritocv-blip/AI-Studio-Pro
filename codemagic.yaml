@@ -1,34 +1,30 @@
 workflows:
-  android-eas-apk:
-    name: AI Studio Pro - APK via EAS
+  android-apk:
+    name: AI Studio Pro - Final Fix
     max_build_duration: 60
     environment:
       node: 20.18.0 
       java: 17
-      groups:
-        - keystore_credentials
-        - expo_credentials
     scripts:
-      - name: Install dependencies and Expo plugin
+      - name: Clean and Install
         script: |
+          # Borramos cualquier rastro de instalaciones previas
+          rm -rf node_modules
+          rm -f package-lock.json
           npm install
-          # Instalamos el plugin oficial para configurar Kotlin
-          npx expo install expo-build-properties
-          npm install -g eas-cli
-      - name: Build APK with EAS locally
+      - name: Generate Android Project
         script: |
-          # Limpiamos caché para que lea el nuevo app.json correctamente
-          EAS_NO_VCS=1 \
-          eas build \
-            --platform android \
-            --profile preview \
-            --local \
-            --non-interactive \
-            --output ./app-release.apk \
-            --clear-cache
+          # Generamos la carpeta nativa con la versión exacta de Kotlin
+          npx expo prebuild --platform android --clean
+      - name: Compile APK
+        script: |
+          cd android
+          # Limpiamos Gradle antes de compilar
+          ./gradlew clean
+          ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../app-release.apk
     artifacts:
       - app-release.apk
-      - "*.apk"
     publishing:
       email:
         recipients:
