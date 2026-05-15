@@ -9,23 +9,29 @@ workflows:
       - name: Install Dependencies
         script: |
           npm install
+          # Instalamos el preset de Babel que le falta a tu proyecto
+          npm install --save-dev babel-preset-expo
+          
+      - name: Create Babel Config
+        script: |
+          # Creamos el archivo de configuración de Babel al vuelo para que Metro no se estrelle
+          echo "module.exports = function(api) { api.cache(true); return { presets: ['babel-preset-expo'] }; };" > babel.config.js
+          
       - name: Expo Prebuild
         script: |
-          # Generamos la carpeta android limpia
           npx expo prebuild --platform android --clean
+          
       - name: Prepare Assets Folder
         script: |
-          # Creamos la carpeta de assets manualmente para evitar el error de Gradle
           mkdir -p android/app/src/main/assets
+          
       - name: Compile Release APK
         script: |
           export NODE_BINARY=$(command -v node)
           cd android
-          # Limpiamos y compilamos
           ./gradlew clean
           ./gradlew assembleRelease -x lint
           
-          # Copiamos el APK generado a la raíz
           cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro-Final.apk
     artifacts:
       - AI-Studio-Pro-Final.apk
