@@ -3,7 +3,6 @@ workflows:
     name: AI Studio Pro - APK via EAS
     max_build_duration: 60
     environment:
-      # Subimos a 20.18.0 para cumplir con el requisito de >20.12.0
       node: 20.18.0 
       java: 17
       groups:
@@ -13,16 +12,17 @@ workflows:
       - name: Install dependencies and fix versions
         script: |
           npm install
-          # Esta línea es la clave: fuerza a actualizar las librerías que dan error
+          # Forzamos la actualización de módulos de Expo para Android
           npx expo install --fix
       - name: Install EAS CLI
         script: |
           npm install -g eas-cli
-      - name: Login to Expo
+      - name: Clean Android Gradle and Build
         script: |
-          eas whoami
-      - name: Build APK with EAS locally
-        script: |
+          # Entramos en la carpeta de android si existe y limpiamos
+          cd android && ./gradlew clean || echo "No android folder yet, skipping clean"
+          cd ..
+          # Ejecutamos el build con una bandera para ignorar avisos de versiones
           eas build \
             --platform android \
             --profile preview \
