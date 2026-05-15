@@ -1,29 +1,29 @@
 workflows:
   android-apk:
-    name: AI Studio Pro - Final Release
+    name: AI Studio Pro - Final Build
     max_build_duration: 60
     environment:
       node: 20.18.0
       java: 17
     scripts:
-      - name: Hard Install
+      - name: Install Sharp and Dependencies
         script: |
-          # Instalamos dependencias y forzamos la herramienta de imagen
-          npm install
+          # Instalamos sharp globalmente para que Expo pueda procesar los iconos
           npm install -g sharp-cli
-      - name: Clean and Prebuild
+          npm install --legacy-peer-deps
+      - name: Force Expo Prebuild
         script: |
-          # Borramos cualquier rastro de la carpeta android antigua
+          # Borramos cualquier rastro previo para evitar conflictos de recursos
           rm -rf android
-          # Generamos el código nativo forzando la creación de recursos
-          npx expo prebuild --platform android --clean
-      - name: Compile Release APK
+          # Generamos la carpeta nativa limpia
+          npx expo prebuild --platform android --clean --no-install
+      - name: Build Android APK
         script: |
           export NODE_BINARY=$(command -v node)
           cd android
-          # Limpiamos caché de Gradle antes de empezar
+          # Limpiamos caché de Gradle antes de compilar
           ./gradlew clean
-          ./gradlew assembleRelease -x lint
+          ./gradlew assembleRelease -x lint --no-daemon
           
           cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro-Final.apk
     artifacts:
