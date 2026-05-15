@@ -17,6 +17,7 @@ workflows:
           npm install -g eas-cli
       - name: Login to Expo
         script: |
+          # Esto verifica que el token funciona correctamente
           eas whoami
       - name: Build APK with EAS locally
         script: |
@@ -32,7 +33,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - your@email.com
+          - carlosbrito.cv@gmail.com
         notify:
           success: true
           failure: true
