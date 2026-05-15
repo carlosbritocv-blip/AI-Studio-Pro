@@ -9,17 +9,17 @@ workflows:
         - keystore_credentials
         - expo_credentials
     scripts:
-      - name: Install dependencies
+      - name: Install dependencies and fix
         script: |
-          # Borramos carpetas viejas por si acaso
-          rm -rf node_modules
           npm install
+          # Forzamos la corrección de versiones que pide el error
+          npx expo install --check
       - name: Install EAS CLI
         script: |
           npm install -g eas-cli
       - name: Build APK with EAS locally
         script: |
-          # Usamos --clear-cache para que EAS empiece de cero absoluto
+          # Usamos --clear-cache para asegurar limpieza total
           eas build \
             --platform android \
             --profile preview \
