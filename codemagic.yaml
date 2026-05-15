@@ -9,26 +9,24 @@ workflows:
         - keystore_credentials
         - expo_credentials
     scripts:
-      - name: Install dependencies and fix versions
+      - name: Install dependencies
         script: |
+          # Borramos carpetas viejas por si acaso
+          rm -rf node_modules
           npm install
-          # Forzamos la actualización de módulos de Expo para Android
-          npx expo install --fix
       - name: Install EAS CLI
         script: |
           npm install -g eas-cli
-      - name: Clean Android Gradle and Build
+      - name: Build APK with EAS locally
         script: |
-          # Entramos en la carpeta de android si existe y limpiamos
-          cd android && ./gradlew clean || echo "No android folder yet, skipping clean"
-          cd ..
-          # Ejecutamos el build con una bandera para ignorar avisos de versiones
+          # Usamos --clear-cache para que EAS empiece de cero absoluto
           eas build \
             --platform android \
             --profile preview \
             --local \
             --non-interactive \
-            --output ./app-release.apk
+            --output ./app-release.apk \
+            --clear-cache
     artifacts:
       - app-release.apk
       - "*.apk"
