@@ -1,6 +1,6 @@
 workflows:
   android-apk:
-    name: AI Studio Pro - Final Fix
+    name: AI Studio Pro - Production Build
     max_build_duration: 60
     environment:
       node: 20.18.0 
@@ -8,23 +8,23 @@ workflows:
     scripts:
       - name: Clean and Install
         script: |
-          # Borramos cualquier rastro de instalaciones previas
           rm -rf node_modules
           rm -f package-lock.json
           npm install
       - name: Generate Android Project
         script: |
-          # Generamos la carpeta nativa con la versión exacta de Kotlin
+          # Generamos los archivos nativos de Android
           npx expo prebuild --platform android --clean
-      - name: Compile APK
+      - name: Compile Release APK
         script: |
           cd android
-          # Limpiamos Gradle antes de compilar
+          # Limpiamos y compilamos en modo RELEASE (sin servidor Metro)
           ./gradlew clean
-          ./gradlew assembleDebug
-          cp app/build/outputs/apk/debug/app-debug.apk ../app-release.apk
+          ./gradlew assembleRelease
+          # Buscamos el APK generado (puede ser app-release.apk o app-release-unsigned.apk)
+          cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro-Final.apk
     artifacts:
-      - app-release.apk
+      - AI-Studio-Pro-Final.apk
     publishing:
       email:
         recipients:
