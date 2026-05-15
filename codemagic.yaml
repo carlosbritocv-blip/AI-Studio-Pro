@@ -7,6 +7,7 @@ workflows:
       java: 17
       groups:
         - keystore_credentials
+        - expo_credentials
     scripts:
       - name: Install dependencies
         script: |
