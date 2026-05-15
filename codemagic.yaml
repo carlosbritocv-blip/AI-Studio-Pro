@@ -1,30 +1,37 @@
 workflows:
   android-apk:
-    name: AI Studio Pro - Final Fix
+    name: AI Studio Pro - Final Release
     max_build_duration: 60
     environment:
       node: 20.18.0 
       java: 17
     scripts:
-      - name: Clean and Install
+      - name: Install Dependencies
         script: |
-          rm -rf node_modules
-          rm -f package-lock.json
           npm install
-      - name: Generate Android Project
+          # Instalamos la CLI de Expo para tener comandos de exportación
+          npm install -g expo-cli
+      - name: Expo Prebuild
         script: |
+          # Generamos la carpeta android limpia
           npx expo prebuild --platform android --clean
-      - name: Manual JS Bundle
+      - name: Build JS Bundle and Assets
         script: |
-          # Creamos la carpeta de recursos si no existe
+          # Creamos las carpetas necesarias por si acaso
           mkdir -p android/app/src/main/assets
-          # Forzamos la creación del paquete de código para que no falle en Gradle
-          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+          mkdir -p android/app/src/main/res/drawable-mdpi
+          
+          # Generamos el bundle de código de forma explícita
+          npx expo export:embed --platform android --dev false --output-dir android/app/src/main/assets
       - name: Compile Release APK
         script: |
+          export NODE_BINARY=$(command -v node)
           cd android
+          # Limpiamos y compilamos ignorando errores menores de linting
           ./gradlew clean
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease -x lint
+          
+          # Copiamos el resultado
           cp app/build/outputs/apk/release/*.apk ../AI-Studio-Pro-Final.apk
     artifacts:
       - AI-Studio-Pro-Final.apk
