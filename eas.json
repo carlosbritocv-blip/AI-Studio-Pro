@@ -1,7 +1,6 @@
 {
   "cli": {
-    "version": ">= 10.0.0",
-    "appId": "baf2e0e6-b20f-41c9-9ad9-fee63cbd82d8"
+    "version": ">= 10.0.0"
   },
   "build": {
     "preview": {
@@ -15,8 +14,5 @@
         "buildType": "app-bundle"
       }
     }
-  },
-  "submit": {
-    "production": {}
   }
 }
